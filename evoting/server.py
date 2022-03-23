@@ -2,25 +2,37 @@ from concurrent import futures
 import logging
 
 import grpc
-# import helloworld_pb2
-# import helloworld_pb2_grpc
 
 import eVoting_pb2
 import eVoting_pb2_grpc
 
-# class Greeter(helloworld_pb2_grpc.GreeterServicer):
-
-#     def SayHello(self, request, context):
-#         return helloworld_pb2.HelloReply(message='Hello, %s!' % request.name)
-
 class eVotingServicer(eVoting_pb2_grpc.eVotingServicer):
 
     def PreAuth(self, request, context):
-        return eVoting_pb2.Challenge(value = b'\x00')
+        return eVoting_pb2.Challenge(value = bytes("123", encoding='utf8'))
+
+    def Auth(self, request, context):
+        return eVoting_pb2.AuthToken(value = bytes("456", encoding='utf8'))
+
+    def CreateElection(self, request, context):
+        return eVoting_pb2.ElectionStatus(code = 789)
+
+    def CastVote(self, request, context):
+        return eVoting_pb2.VoteStatus(code = 101)
+
+    def GetResult(self, request, context):
+        result = eVoting_pb2.ElectionResult()
+        result.status = 1
+
+        theCount = result.count.add()
+        theCount.choice_name =  "Lincoln"
+        theCount.count = 1000
+        theCount.token.value = bytes("SOS", encoding='utf8')
+
+        return result
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    #helloworld_pb2_grpc.add_GreeterServicer_to_server(Greeter(), server)
     eVoting_pb2_grpc.add_eVotingServicer_to_server(eVotingServicer(), server)
     server.add_insecure_port('[::]:50051')
     server.start()
