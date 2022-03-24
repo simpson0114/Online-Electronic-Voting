@@ -1,0 +1,79 @@
+syntax = "proto2";
+package voting;
+import "google/protobuf/timestamp.proto";
+
+
+//A.1. Message Formats
+message Voter {
+    required string name = 1;
+    required string group = 2;
+    required bytes public_key = 3;
+}
+
+message VoterName {
+    required string name = 1;
+}
+
+message Status {
+    required int32 code = 1;
+}
+
+//B. RPC APIs
+service eVoting {
+    rpc PreAuth (VoterName) returns (Challenge);
+    rpc Auth (AuthRequest) returns (AuthToken);
+    rpc CreateElection (Election) returns (Status);
+    rpc CastVote (Vote) returns (Status);
+    rpc GetResult(ElectionName) returns (ElectionResult);
+}
+
+//B.1. Message Formats
+message Challenge {
+    required bytes value = 1;
+}
+
+message Response {
+    required bytes value = 1;
+}
+
+message AuthRequest {
+    required VoterName name = 1;
+    required Response response = 2;
+}
+
+message AuthToken {
+    required bytes value = 1;
+}
+
+message Election {
+    required string name = 1;
+    repeated string groups = 2;
+    repeated string choices = 3;
+    required google.protobuf.Timestamp end_date = 4;
+    required AuthToken token = 5;
+}
+
+// message ElectionStatus {
+//     required int32 code = 1;
+// }
+
+message Vote {
+    required string election_name = 1;
+    required string choice_name = 2;
+    optional AuthToken  token = 3;
+}
+
+message ElectionName {
+    required string name = 1;
+}
+
+message VoteCount {
+    required string choice_name = 1;
+    required int32  count  = 2;
+    //optional AuthToken token = 3;
+}
+
+message ElectionResult {
+    required int32 status = 1;
+    repeated VoteCount counts = 2;
+}
