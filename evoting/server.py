@@ -1,11 +1,27 @@
 from concurrent import futures
 import logging
+import signal
+import sys
+from typing import Optional
 
 import grpc
 
 import eVoting_pb2
 import eVoting_pb2_grpc
 
+
+####################### Local Service API #######################
+def RegisterVoter(voter: eVoting_pb2.Voter) -> Optional[eVoting_pb2.Status]:
+    pass
+
+def UnregisterVoter(votername: eVoting_pb2.VoterName) -> Optional[eVoting_pb2.Status]:
+    pass
+
+#################################################################
+
+
+
+############################ RPC API ############################
 class eVotingServicer(eVoting_pb2_grpc.eVotingServicer):
     # Define every RPC call down below
     def PreAuth(self, request, context):
@@ -18,11 +34,11 @@ class eVotingServicer(eVoting_pb2_grpc.eVotingServicer):
 
     def CreateElection(self, request, context):
         print("Received CreateElection RPC call...")
-        return eVoting_pb2.ElectionStatus(code = 789)
+        return eVoting_pb2.Status(code = 789)
 
     def CastVote(self, request, context):
         print("Received CastVote RPC call...")
-        return eVoting_pb2.VoteStatus(code = 101)
+        return eVoting_pb2.Status(code = 101)
 
     def GetResult(self, request, context):
         print("Received GetResult RPC call...")
@@ -30,11 +46,17 @@ class eVotingServicer(eVoting_pb2_grpc.eVotingServicer):
         result = eVoting_pb2.ElectionResult()
         result.status = 1
 
-        theCount = result.count.add()
+        theCount = result.counts.add()
         theCount.choice_name =  "Lincoln"
         theCount.count = 1000
-        theCount.token.value = bytes("SOS", encoding='utf8')
+        #theCount.token.value = bytes("SOS", encoding='utf8')
         return result
+
+#################################################################
+
+def signal_handler(sig, frame):
+    print('Server terminated.')
+    sys.exit(0)
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
@@ -47,4 +69,5 @@ def serve():
 
 if __name__ == '__main__':
     logging.basicConfig()
+    signal.signal(signal.SIGINT, signal_handler)
     serve()

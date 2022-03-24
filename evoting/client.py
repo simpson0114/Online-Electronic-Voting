@@ -10,7 +10,7 @@ from google.protobuf.timestamp_pb2 import Timestamp
 
 def run():
     with grpc.insecure_channel('localhost:50051') as channel:
-        #creat a stub for RPC call
+        #create a stub for RPC call
         stub = eVoting_pb2_grpc.eVotingStub(channel)
 
         # call PreAuth
@@ -44,9 +44,9 @@ def run():
     # print the responses of the RPC calls above
     print("Testing PreAuth... the Challenge is: " + preAuthResponse.value.decode("utf-8"))
     print("Testing Auth... the AuthToken is: " + authResponse.value.decode("utf-8"))
-    print("Testing CreateElection... the ElectionStatus is: " + str(createElectionResponse.code))
-    print("Testing CastVote... the VoteStatus is: " + str(castVoteResponse.code))
-    print("Testing GetResult... the ElectionResult is: " + getResultResponse.count[0].choice_name)
+    print("Testing CreateElection... the Status is: " + str(createElectionResponse.code))
+    print("Testing CastVote... the Status is: " + str(castVoteResponse.code))
+    print("Testing GetResult... the ElectionResult is: " + getResultResponse.counts[0].choice_name)
 
 
 if __name__ == '__main__':
