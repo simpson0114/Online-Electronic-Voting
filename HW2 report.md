@@ -61,3 +61,4 @@ Besides the reasonable operations, we also try the unreaonable operations trigge
 
 The screenshot down below shows that the server and the client run as expected. The terminal on the left is the server's logs of receiving RPC calls; the terminal on the right shows the responses that the client got from the server.
 
+![](https://i.imgur.com/ufft5oN.png)
