@@ -3,10 +3,10 @@
 ## Design
 We use Python to implement the voting server. 
 
-### PyNaCl, Python binding to the libsodium library, is used in the authentication process. After signing the challenge, client send back detached signature to RPC server. 
+PyNaCl, Python binding to the libsodium library, is used in the authentication process. After signing the challenge, client send back detached signature to RPC server. 
 https://pynacl.readthedocs.io/en/latest/
 
-### With the unsure method to preserve internal state of the server, we encapsulate another class named Server to abstract the manipulation to data. Currently, the internal state is saved in memory with the data structure, dictiory. In the future, without modifying RPC server, it can be easily to preserve data in another way, for example, local files, database, etc. 
+With the unsure method to preserve internal state of the server, we encapsulate another class named Server to abstract the manipulation to data. Currently, the internal state is saved in memory with the data structure, dictiory. In the future, without modifying RPC server, it can be easily to preserve data in another way, for example, local files, database, etc. 
 
 
 
@@ -33,13 +33,13 @@ index: token, value: {"expired", "name"}
 index: election_name, value: {"end_date", "groups", "votes", "voters"}
 
 ### Server API
-1. 
+1. registration
     * RegisterVoter
     * UnregisterVoter
     * add_register
     * get_register
     * get_register_publicKey
-2. 
+2. challenge
     * add_challenge
     * get_challenge
 3. token
