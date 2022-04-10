@@ -63,21 +63,35 @@ def run():
                     token = eVoting_pb2.AuthToken(value = bytes(token))\
         ))
 
+        # call GetResult
+        getResultResponse = stub.GetResult(eVoting_pb2.ElectionName(name=election_name))
+        print("Testing GetResult Before Due... the Status is: "+ str(getResultResponse.status))
+        print("----")
+
         sleep(1)
 
         # call GetResult
         getResultResponse = stub.GetResult(eVoting_pb2.ElectionName(name=election_name))
 
-    # print the responses of the RPC calls above
-    print("Testing PreAuth... the Challenge is: ")
-    print(preAuthResponse.value)
-    print("Testing Auth... the AuthToken is: ")
-    print(authResponse.value)
-    print("Testing CreateElection... the Status is: " + str(createElectionResponse.code))
-    print("Testing CastVote... the Status is: " + str(castVoteResponse.code))
-    print("Testing GetResult... the ElectionResult is: ")
-    for voteCount in getResultResponse.counts:
-        print("Choice {} got {} ballots in election!".format(voteCount.choice_name, voteCount.count))
+        # print the responses of the RPC calls above
+        print("Testing PreAuth... the Challenge is: ")
+        print(preAuthResponse.value)
+        print("Testing Auth... the AuthToken is: ")
+        print(authResponse.value)
+        print("Testing CreateElection... the Status is: " + str(createElectionResponse.code))
+        print("Testing CastVote... the Status is: " + str(castVoteResponse.code))
+        print("Testing GetResult... the Status is: " + str(getResultResponse.status))
+        for voteCount in getResultResponse.counts:
+            print("Choice {} got {} ballots in election!".format(voteCount.choice_name, voteCount.count))
+
+        # overdue vote
+        castVoteResponse = stub.CastVote(eVoting_pb2.Vote(\
+                        election_name = election_name,\
+                        choice_name = "sense Lab",\
+                        token = eVoting_pb2.AuthToken(value = bytes(token))\
+        ))
+        print("----")
+        print("Testing CastVote Overdue... the Status is: " + str(castVoteResponse.code))
 
 
 if __name__ == '__main__':

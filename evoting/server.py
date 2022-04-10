@@ -23,19 +23,18 @@ CHALLENGE_SIZE = 4
 class Server: 
 
     ''' Internal State '''
-    # index: register_name
+    # index: register_name, value: {"group", "public_key"}
     registration_table = {}
     # index: register_name, value: challenge
     challenge_table = {} 
     # index: token, value: {"expired", "name"}
     token_table = {} 
-    # index: election_name
+    # index: election_name, value: {"end_date", "groups", "votes", "voters"}
     election_table = {}
 
     ''' TOKEN '''
 
     def add_token(self, index, name):
-        print(name)
         expired = datetime.now()+timedelta(hours=1)
         self.token_table[index] = {"expired": expired, "name": name}
 
@@ -87,8 +86,8 @@ class Server:
         self.election_table[index]["votes"][choice] += 1
         self.election_table[index]["voters"].append(voter)
 
-    def isRepeated_vote(self, index, name):
-        return name in self.election_table[index]["voters"]
+    def isRepeated_vote(self, index, voter):
+        return voter in self.election_table[index]["voters"]
 
     def isValid_group(self, index, group):
         election = self.election_table[index]
@@ -202,7 +201,7 @@ class eVotingServicer(eVoting_pb2_grpc.eVotingServicer):
                 return eVoting_pb2.Status(code = 1) # Status.code=1 : Invalid authentication token
 
             
-            if not self.server.isExisted_election(index):
+            if not self.server.isExisted_election(index) or self.server.isDue_election(index):
                 return eVoting_pb2.Status(code = 2) # Status.code=2 : Invalid election name
             
             name = self.server.get_name_by_token(token)
