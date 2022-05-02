@@ -39,7 +39,7 @@ class DbAdapter:
     def add_register(self, name, group, public_key):
         conn = pymysql.connect(**db_settings)
         with conn.cursor() as cursor:
-            cursor.execute(f"SELECT groups,public_key from Registration WHERE name='{name}'")
+            cursor.execute(f"SELECT `groups`,public_key from Registration WHERE name='{name}'")
             data = cursor.fetchone()
             if data is not None:
                 status =  1  # Status.code=1 : Voter with the same name already exists
@@ -55,7 +55,7 @@ class DbAdapter:
     def del_register(self, name):
         conn = pymysql.connect(**db_settings)
         with conn.cursor() as cursor:
-            cursor.execute(f"SELECT groups,public_key from Registration WHERE name='{name}'")
+            cursor.execute(f"SELECT `groups`,public_key from Registration WHERE name='{name}'")
             data = cursor.fetchone()
             if data is None:
                 status =  1  # Status.code=1 : No voter with the name exists on the server
@@ -70,7 +70,7 @@ class DbAdapter:
     def get_register(self, name):
         conn = pymysql.connect(**db_settings)
         with conn.cursor() as cursor:
-            cursor.execute(f"SELECT groups,public_key from Registration WHERE name='{name}'")
+            cursor.execute(f"SELECT `groups`,public_key from Registration WHERE name='{name}'")
             data = cursor.fetchone()
         conn.close()
 
