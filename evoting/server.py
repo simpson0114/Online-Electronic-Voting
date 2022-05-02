@@ -254,16 +254,21 @@ def signal_handler(sig, frame):
     print('Server terminated.')
     sys.exit(0)
 
-def serve():
+def serve(port):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     eVoting_pb2_grpc.add_eVotingServicer_to_server(eVotingServicer(), server)
-    server.add_insecure_port('[::]:50051')
+    server.add_insecure_port('[::]:{}'.format(port))
     server.start()
-    print("Server listening on port 50051...")
+    print("Server listening on port {}...".format(port))
     server.wait_for_termination()
 
 
 if __name__ == '__main__':
+    if len(sys.argv)!=2:
+        print('need port')
+        sys.exit()
+    
+    port = sys.argv[1]
     logging.basicConfig()
     signal.signal(signal.SIGINT, signal_handler)
-    serve()
+    serve(port)
