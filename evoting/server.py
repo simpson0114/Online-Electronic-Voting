@@ -7,12 +7,14 @@ import sys
 from typing import Optional
 
 import grpc
+import nacl
 import eVoting_pb2
 import eVoting_pb2_grpc
 
 import secrets
 from nacl.signing import SigningKey
 from nacl.signing import VerifyKey
+from nacl.encoding import Base64Encoder
 from datetime import datetime, timedelta
 
 
@@ -107,7 +109,7 @@ class Server:
             index = voter.name
             if index not in self.registration_table: 
                 # Create a VerifyKey object from a hex serialized public key
-                public_key = VerifyKey(voter.public_key)
+                public_key = VerifyKey(voter.public_key, encoder=Base64Encoder)
                 self.add_register(index, voter.group, public_key)
                 return eVoting_pb2.Status(code=0) # Status.code=0 : Successful registration
             else:
