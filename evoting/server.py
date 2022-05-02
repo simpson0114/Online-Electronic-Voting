@@ -137,19 +137,8 @@ class eVotingServicer(eVoting_pb2_grpc.eVotingServicer):
 
     def __init__(self):
         self.server = Server()  # handling internal state 
-
-        ''' Toy Registration '''
-        # prepare keypairs
-        signing_key = SigningKey.generate()
-        with open("private_key", "wb") as f:
-            f.write(signing_key.encode())
-        verify_key = signing_key.verify_key
-        verify_key_bytes = verify_key.encode()
-
-        # call RegisterVoter
-        self.server.RegisterVoter(eVoting_pb2.Voter(name="Bob", group="Team A", public_key=verify_key_bytes))
-        ''' TO BE MODIFIED NEXT LAB '''
-    
+        
+        
     
     # Define every RPC call down below
     def PreAuth(self, request, context):
