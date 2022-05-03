@@ -144,7 +144,13 @@ class eVotingServicer(eVoting_pb2_grpc.eVotingServicer):
         
         with open("public_key", "rb") as f:
             public_key_byte = f.read()
-        self.server.RegisterVoter(Voter(name="Frog", group="A", public_key=public_key_byte))
+        self.server.RegisterVoter(eVoting_pb2.Voter(name="Frog", group="A", public_key=public_key_byte))
+
+    def RegisterVoter(self, voter: eVoting_pb2.Voter):
+        self.server.RegisterVoter(voter)
+    
+    def UnregisterVoter(self, votername: eVoting_pb2.VoterName):
+        self.server.UnregisterVoter(votername)
 
     # Define every RPC call down below
     def PreAuth(self, request, context):
