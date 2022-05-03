@@ -7,12 +7,14 @@ import sys
 from typing import Optional
 
 import grpc
+import nacl
 import eVoting_pb2
 import eVoting_pb2_grpc
 
 import secrets
 from nacl.signing import SigningKey
 from nacl.signing import VerifyKey
+from nacl.encoding import Base64Encoder
 from datetime import datetime, timedelta
 from DbAdapter import DbAdapter
 
@@ -40,7 +42,7 @@ class Server:
 
     def add_token(self, index, name):
         expired = datetime.now()+timedelta(hours=1)
-        db = DbAdapter(self.db_ip, self.db_ip)
+        db = DbAdapter(self.db_ip, self.db_port)
         db.add_token(index, expired, name)
         #self.token_table[index] = {"expired": expired, "name": name}
 
@@ -48,13 +50,13 @@ class Server:
         #if index not in self.token_table:
         #    return False
         #expired = self.token_table[index]["expired"]
-        db = DbAdapter(self.db_ip, self.db_ip)
+        db = DbAdapter(self.db_ip, self.db_port)
         expired, name = db.get_token(index)
         return datetime.now()<expired
 
     def get_name_by_token(self, index):
         #return self.token_table[index]["name"]
-        db = DbAdapter(self.db_ip, self.db_ip)
+        db = DbAdapter(self.db_ip, self.db_port)
         expired, name = db.get_token(index)
         return name
 
@@ -62,37 +64,37 @@ class Server:
 
     def add_challenge(self, index, challenge):
         #self.challenge_table[index] = challenge
-        db = DbAdapter(self.db_ip, self.db_ip)
+        db = DbAdapter(self.db_ip, self.db_port)
         db.add_challenge(index, challenge)
 
     def get_challenge(self, index):
         #return self.challenge_table[index]
-        db = DbAdapter(self.db_ip, self.db_ip)
+        db = DbAdapter(self.db_ip, self.db_port)
         challenge = db.get_challenge(index)
         return challenge
     
     ''' REGISTRATION '''
 
     def add_register(self, index, group, public_key):
-        db = DbAdapter(self.db_ip, self.db_ip)
+        db = DbAdapter(self.db_ip, self.db_port)
         status = db.add_register(index, group, public_key)
         return status
         #self.registration_table[index] = {"group": group, "public_key": public_key}
 
     def del_register(self, index):
-        db = DbAdapter(self.db_ip, self.db_ip)
+        db = DbAdapter(self.db_ip, self.db_port)
         status = db.del_register(index)
         return status
 
     def get_register(self, index):
-        db = DbAdapter(self.db_ip, self.db_ip)
+        db = DbAdapter(self.db_ip, self.db_port)
         group, public_key = db.get_register(index)
         table = {"group" : group, "public_key" : public_key}
         return table
         #return self.registration_table[index]
 
     def get_register_publicKey(self, index):
-        db = DbAdapter(self.db_ip, self.db_ip)
+        db = DbAdapter(self.db_ip, self.db_port)
         group, public_key = db.get_register(index)
         return public_key
         #return self.registration_table[index]["public_key"]
@@ -100,7 +102,7 @@ class Server:
     ''' ELECTION '''
 
     def add_election(self, election):
-        db = DbAdapter(self.db_ip, self.db_ip)
+        db = DbAdapter(self.db_ip, self.db_port)
         index = election.name
         #votes = {}
         #for choice in election.choices:
@@ -110,18 +112,19 @@ class Server:
         db.add_election(index, due, election.groups, election.choices)
 
     def isExisted_election(self, index):
-        db = DbAdapter(self.db_ip, self.db_ip)
+        db = DbAdapter(self.db_ip, self.db_port)
         elections = db.get_all_elections()
+        index = index.replace('?','')
         return index in elections
     
     def get_election(self, index):
-        db = DbAdapter(self.db_ip, self.db_ip)
+        db = DbAdapter(self.db_ip, self.db_port)
         election = db.get_election(index)
         return election
         #return self.election_table[index]
 
     def add_vote(self, index, choice, voter):
-        db = DbAdapter(self.db_ip, self.db_ip)
+        db = DbAdapter(self.db_ip, self.db_port)
         db.add_vote(index, choice, voter)
         #self.election_table[index]["votes"][choice] += 1
         #self.election_table[index]["voters"].append(voter)
@@ -149,7 +152,7 @@ class Server:
     def RegisterVoter(self, voter: eVoting_pb2.Voter) -> Optional[eVoting_pb2.Status]:
         try:
             index = voter.name
-            public_key = VerifyKey(voter.public_key)
+            public_key = VerifyKey(voter.public_key, encoder=Base64Encoder)
             status = self.add_register(index, voter.group, voter.public_key)
             return eVoting_pb2.Status(code=status)
             '''
@@ -186,21 +189,17 @@ class Server:
 class eVotingServicer(eVoting_pb2_grpc.eVotingServicer):
 
     def __init__(self, db_port):
-        self.server = Server('localhost', db_port)  # handling internal state 
+        self.server = Server('localhost', db_port)  # handling internal state
+        with open("public_key", "rb") as f:
+            public_key_byte = f.read()
+        self.server.RegisterVoter(eVoting_pb2.Voter(name="Frog", group="A", public_key=public_key_byte))
 
-        ''' Toy Registration '''
-        # prepare keypairs
-        signing_key = SigningKey.generate()
-        with open("private_key", "wb") as f:
-            f.write(signing_key.encode())
-        verify_key = signing_key.verify_key
-        verify_key_bytes = verify_key.encode()
+    def RegisterVoter(self, voter: eVoting_pb2.Voter):
+        self.server.RegisterVoter(voter)
 
-        # call RegisterVoter
-        self.server.RegisterVoter(eVoting_pb2.Voter(name="Bob", group="Team A", public_key=verify_key_bytes))
-        ''' TO BE MODIFIED NEXT LAB '''
-    
-    
+    def UnregisterVoter(self, votername: eVoting_pb2.VoterName):
+        self.server.UnregisterVoter(votername)
+
     # Define every RPC call down below
     def PreAuth(self, request, context):
         print("Received PreAuth RPC call...")

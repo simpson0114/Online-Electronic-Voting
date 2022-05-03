@@ -1,43 +1,46 @@
-import pymysql as dbapi2
-#import pyrqlite.dbapi2 as dbapi2
+#import pymysql as dbapi2
+import pyrqlite.dbapi2 as dbapi2
+from math import log
 import os
 from datetime import datetime
+from nacl.signing import VerifyKey
+from nacl.encoding import Base64Encoder
 
 TOKEN_SIZE = 4
 CHALLENGE_SIZE = 4
 
 
 db_settings = {
-    "host": "140.113.208.100",
-    "port": 3306,
-    "user": "root",
-    "password": "evoting2022",
-    "db": "evoting",
-    "charset": "utf8"
+    "host": "localhost",
+    "port": 4401,
+    #"user": "root",
+    #"password": "evoting2022",
+    #"db": "evoting",
+    #"charset": "utf8"
 }
 
 
 class DbAdapter:
     def __init__(self, ip, port):
-        #db_settings['host'] = ip
-        #db_settings['port'] = port
+        db_settings['host'] = ip
+        db_settings['port'] = int(port)
         conn = dbapi2.connect(**db_settings)
         with conn.cursor() as cursor:
-            cursor.execute("CREATE TABLE IF NOT EXISTS `Registration`(`name` text NOT NULL, \
-                                                                    `groups` text NOT NULL, \
-                                                                    `public_key` text NOT NULL)")
+            cursor.execute("CREATE TABLE IF NOT EXISTS Registration(name text NOT NULL, \
+                                                                    groups text NOT NULL, \
+                                                                    public_key text NOT NULL)")
 
-            cursor.execute("CREATE TABLE IF NOT EXISTS `Challenge`(`name` text NOT NULL, \
-                                                                   `challenge` text NOT NULL)")
+            cursor.execute("CREATE TABLE IF NOT EXISTS Challenge(name text NOT NULL, \
+                                                                challenge text NOT NULL)")
 
-            cursor.execute("CREATE TABLE IF NOT EXISTS `Token`(`token` text NOT NULL, \
-                                                               `expired` text NOT NULL, \
-                                                               `name` text NOT NULL)")
+            cursor.execute("CREATE TABLE IF NOT EXISTS Token(token text NOT NULL, \
+                                                             expired text NOT NULL, \
+                                                             name text NOT NULL)")
 
-            cursor.execute("CREATE TABLE IF NOT EXISTS `Election`(`election_name` text NOT NULL, \
-                                                                  `end_date` text NOT NULL, \
-                                                                  `groups` text NOT NULL, \
-                                                                  `voters` text NOT NULL)")
+            cursor.execute("CREATE TABLE IF NOT EXISTS Election(election_name text NOT NULL, \
+                                                                end_date text NOT NULL, \
+                                                                groups text NOT NULL, \
+                                                                voters text NOT NULL)")
         conn.commit()
         conn.close()
 
@@ -72,6 +75,11 @@ class DbAdapter:
 
         return status
 
+    def bytes_needed(self, n):
+        if n == 0:
+            return 1
+        return int(log(n, 256)) + 1
+
     def get_register(self, name):
         conn = dbapi2.connect(**db_settings)
         with conn.cursor() as cursor:
@@ -83,7 +91,12 @@ class DbAdapter:
             return None, None
         else:
             group = data[0]
-            public_key = int(data[1]).to_bytes(32, byteorder="big")
+            bytes_need = self.bytes_needed(int(data[1]))
+            public_key = int(data[1]).to_bytes(bytes_need, byteorder="big")
+            #missing_padding = 4 - len(public_key) % 4
+            #if missing_padding:
+            #    public_key += b'=' * missing_padding
+            public_key = VerifyKey(public_key, encoder=Base64Encoder)
             return group, public_key
 
     def add_challenge(self, name, challenge):
@@ -136,14 +149,15 @@ class DbAdapter:
     def add_election(self, election_name, end_date, groups, choices):
         conn = dbapi2.connect(**db_settings)
         with conn.cursor() as cursor:
+            election_name = election_name.replace('?', '')
             end_date_tostr = end_date.strftime("%m/%d/%Y, %H:%M:%S")
             groups_tostr = ','.join(groups)
             voters = ''
             cursor.execute(f"DELETE from Election WHERE election_name='{election_name}'")
             cursor.execute(f"INSERT INTO `Election` values('{election_name}','{end_date_tostr}', \
                                                         '{groups_tostr}','{voters}')")
-            cursor.execute(f"DROP TABLE IF EXISTS {election_name}")                                            
-            cursor.execute(f"CREATE TABLE `{election_name}`(`name` text NOT NULL, \
+            cursor.execute(f"DROP TABLE IF EXISTS '{election_name}'")                                            
+            cursor.execute(f"CREATE TABLE '{election_name}'(`name` text NOT NULL, \
                                                             `votes` integer NOT NULL)")
             
             choices_list = []
@@ -174,6 +188,7 @@ class DbAdapter:
     def get_election(self, election_name):
         conn = dbapi2.connect(**db_settings)
         with conn.cursor() as cursor:
+            election_name = election_name.replace('?', '')
             cursor.execute(f"SELECT end_date,`groups`,voters from Election WHERE election_name='{election_name}'")
             datas = cursor.fetchone()
 
@@ -181,7 +196,7 @@ class DbAdapter:
             groups = datas[1]
             voters = datas[2]
 
-            cursor.execute(f"SELECT name,votes from {election_name}")
+            cursor.execute(f"SELECT name,votes from '{election_name}'")
             datas = cursor.fetchall()
             votes = {}
             for data in datas:
@@ -192,6 +207,7 @@ class DbAdapter:
         return table
 
     def add_vote(self, election_name, choice, voter):
+        election_name = election_name.replace('?', '')
         conn = dbapi2.connect(**db_settings)
         with conn.cursor() as cursor:
             cursor.execute(f"SELECT voters from Election WHERE election_name='{election_name}'")
@@ -201,7 +217,7 @@ class DbAdapter:
                 conn.commit()
                 conn.close()
                 return
-            cursor.execute(f"SELECT votes from {election_name} WHERE name='{choice}'")
+            cursor.execute(f"SELECT votes from '{election_name}' WHERE name='{choice}'")
             votes = cursor.fetchone()
             if votes is None:
                 print(f'There no candidate name {choice}')

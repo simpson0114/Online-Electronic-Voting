@@ -11,6 +11,7 @@ import eVoting_pb2_grpc
 from google.protobuf.timestamp_pb2 import Timestamp
 from nacl.signing import SigningKey
 from datetime import datetime, timedelta
+import base64
 
 
 
@@ -23,10 +24,11 @@ def run():
         with open("private_key", "rb") as f:
             serialized_key = f.read()
 
+        serialized_key = base64.b64decode(serialized_key)
         singning_key = SigningKey(serialized_key)
 
         # call PreAuth
-        preAuthResponse = stub.PreAuth(eVoting_pb2.VoterName(name = "Bob"))
+        preAuthResponse = stub.PreAuth(eVoting_pb2.VoterName(name = "Frog"))
         
         # call Auth
         challenge = preAuthResponse.value
@@ -34,7 +36,7 @@ def run():
         signature = signed.signature
         
         authResponse = stub.Auth(eVoting_pb2.AuthRequest(
-                    name = eVoting_pb2.VoterName(name = "Bob"),\
+                    name = eVoting_pb2.VoterName(name = "Frog"),\
                     response = eVoting_pb2.Response(value = bytes(signature))\
         ))
 

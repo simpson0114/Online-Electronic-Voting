@@ -28,9 +28,9 @@ class eVotingManager(eVoting_pb2_grpc.eVotingServicer):
 
     def ft_grpc(self, p_callback, b_callback, request):
         try:
-            res = p_callback(request, timeout=0.5)
+            res = p_callback(request, timeout=20.0)
         except: 
-            res = b_callback(request, timeout=0.5)
+            res = b_callback(request, timeout=20.0)
         return res
 
     # Define every RPC call down below
