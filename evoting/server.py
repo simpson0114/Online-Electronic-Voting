@@ -52,7 +52,10 @@ class Server:
         #expired = self.token_table[index]["expired"]
         db = DbAdapter(self.db_ip, self.db_port)
         expired, name = db.get_token(index)
-        return datetime.now()<expired
+        if name == None: # get_token() might return empty result
+            return False
+         else:
+            return datetime.now()<expired
 
     def get_name_by_token(self, index):
         #return self.token_table[index]["name"]
@@ -136,7 +139,12 @@ class Server:
     def isValid_group(self, index, group):
         election = self.get_election(index)
         #election = self.election_table[index]
-        return group in election["groups"]
+        group_list = election["groups"].split(',') ## group_list is infact a string not a list
+        for iter in group_list:
+            if iter == group:
+                return True
+        return False
+         # return group in election["groups"]
 
     def isDue_election(self, index):
         election = self.get_election(index)
