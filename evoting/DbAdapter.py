@@ -1,5 +1,6 @@
 #import pymysql as dbapi2
 import pyrqlite.dbapi2 as dbapi2
+import pyrqlite.cursors as cursors
 from math import log
 import os
 from datetime import datetime
@@ -166,6 +167,10 @@ class DbAdapter:
                     choices_list.append(choice)
             elif type(choices) is list:
                 choices_list = choices
+            else: ## Handle RPC call situation.
+                list(choices)
+                for choice in choices:
+                    choices_list.append(choice)
                 
             for choice in choices_list:
                 cursor.execute(f"INSERT INTO `{election_name}` values('{choice}',0)")
