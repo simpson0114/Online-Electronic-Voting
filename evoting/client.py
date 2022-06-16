@@ -11,11 +11,11 @@ import eVoting_pb2_grpc
 from google.protobuf.timestamp_pb2 import Timestamp
 from nacl.signing import SigningKey
 from datetime import datetime, timedelta
-
+from nacl.encoding import Base64Encoder
 
 
 def run():
-    with grpc.insecure_channel('localhost:50051') as channel:
+    with grpc.insecure_channel('localhost:3100') as channel:
         # create a stub for RPC call
         stub = eVoting_pb2_grpc.eVotingStub(channel)
 
@@ -23,7 +23,7 @@ def run():
         with open("private_key", "rb") as f:
             serialized_key = f.read()
 
-        singning_key = SigningKey(serialized_key)
+        singning_key = SigningKey(serialized_key, encoder=Base64Encoder)
 
         # call PreAuth
         preAuthResponse = stub.PreAuth(eVoting_pb2.VoterName(name = "Bob"))
@@ -42,10 +42,10 @@ def run():
 
         
         # election config
-        election_name = "Where is the Swaggest place for having sex?"
-        groups = ["Team A", "Team B"]
+        election_name = "Where is the Swaggest place for having sex"
+        groups = ["A", "B"]
         choices = ["Highway", "Resturant", "sense Lab"]
-        due = datetime.now()+timedelta(seconds=1) # due 1 seconds later
+        due = datetime.now()+timedelta(seconds=10) # due 1 seconds later
 
         # call CreateElection (declare variable in a different way due to timestamp library)
         election = eVoting_pb2.Election()
@@ -59,7 +59,7 @@ def run():
         #call CastVote
         castVoteResponse = stub.CastVote(eVoting_pb2.Vote(\
                     election_name = election_name,\
-                    choice_name = "sense Lab",\
+                    choice_name = choices[2],\
                     token = eVoting_pb2.AuthToken(value = bytes(token))\
         ))
 
@@ -68,7 +68,7 @@ def run():
         print("Testing GetResult Before Due... the Status is: "+ str(getResultResponse.status))
         print("----")
 
-        sleep(1)
+        sleep(10)
 
         # call GetResult
         getResultResponse = stub.GetResult(eVoting_pb2.ElectionName(name=election_name))
