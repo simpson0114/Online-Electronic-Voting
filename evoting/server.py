@@ -50,7 +50,10 @@ class eVotingServicer(eVoting_pb2_grpc.eVotingServicer):
         voterName = request
         key = voterName.name
         challenge = secrets.token_bytes(CHALLENGE_SIZE)
-        self.server.add_challenge(key, challenge, run2pc=True)
+        try:
+            self.server.add_challenge(key, challenge, run2pc=True)
+        except:
+            eVoting_pb2.Challenge(value = bytes("2pc is down", encoding="utf-8"))
         return eVoting_pb2.Challenge(value = bytes(challenge))
     
     def Auth(self, request, context):
@@ -66,7 +69,10 @@ class eVotingServicer(eVoting_pb2_grpc.eVotingServicer):
         token = secrets.token_bytes(TOKEN_SIZE)
         expired = datetime.now()+timedelta(hours=1)
         val = {"name": index, "expired": expired}
-        self.server.add_token(token, val, run2pc=True) # token is the index here
+        try:
+            self.server.add_token(token, val, run2pc=True) # token is the index here
+        except:
+            return eVoting_pb2.AuthToken(value = bytes("2pc is down", encoding="utf-8"))
         return eVoting_pb2.AuthToken(value = bytes(token))
 
     def CreateElection(self, request, context):

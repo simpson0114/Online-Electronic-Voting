@@ -1,3 +1,4 @@
+from codecs import raw_unicode_escape_decode
 from nacl.signing import SigningKey
 from nacl.signing import VerifyKey
 from nacl.encoding import Base64Encoder
@@ -31,7 +32,7 @@ class Server:
 
     def add_token(self, index, val, run2pc=False): #2pc
         if run2pc==True and self.tc.run(1, index, val)==False:
-            return
+            raise Exception()
         name = val["name"]
         expired = val["expired"]
         #self.token_table[index] = {"expired": expired, "name": name}
@@ -52,7 +53,7 @@ class Server:
 
     def add_challenge(self, index, challenge, run2pc=False): #2pc
         if run2pc==True and self.tc.run(0, index, challenge)==False:
-            return
+            raise Exception()
         #self.challenge_table[index] = challenge
         print(challenge)
         self.db.add_challenge(index, challenge)
@@ -67,7 +68,7 @@ class Server:
     def add_register(self, index, val, run2pc=False): #2pc
         #self.registration_table[index] = {"group": group, "public_key": public_key}
         if run2pc==True and self.tc.run(4, index, val)==False:
-            return
+            raise Exception()
         group = val["group"]
         public_key = val["public_key"]
         status = self.db.add_register(index, group, public_key)
@@ -89,7 +90,7 @@ class Server:
     def add_election(self, index, election, run2pc=False): #2pc election->grpc
         #index = election.name
         if run2pc==True and self.tc.run(2, index, election)==False:
-            return
+            raise Exception()
         #votes = {}
         #for choice in election.choices:
         #    votes[choice] = 0
@@ -110,7 +111,7 @@ class Server:
     
     def add_vote(self, index, val, run2pc=False): #2pc
         if run2pc==True and self.tc.run(3, index, val)==False:
-            return
+            raise Exception()
         choice = val["choice"]
         voter = val["voter"]
         #self.election_table[index]["votes"][choice] += 1
