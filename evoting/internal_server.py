@@ -42,7 +42,11 @@ class Server:
     def isValid_token(self, index):
         #expired = self.token_table[index]["expired"]
         expired, name = self.db.get_token(index)
-        return datetime.now()<expired
+        if name == None: # get_token() might return empty result
+            return False
+        else:
+            return datetime.now()<expired
+
 
     def get_name_by_token(self, index):
         #return self.token_table[index]["name"]
@@ -127,7 +131,11 @@ class Server:
     def isValid_group(self, index, group):
         election = self.get_election(index)
         #election = self.election_table[index]
-        return group in election["groups"]
+        group_list = election["groups"].split(',')
+        for iter in group_list:
+            if iter == group:
+                return True
+        return False
 
     def isDue_election(self, index):
         election = self.get_election(index)
