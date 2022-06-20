@@ -53,7 +53,7 @@ class eVotingServicer(eVoting_pb2_grpc.eVotingServicer):
         try:
             self.server.add_challenge(key, challenge, run2pc=True)
         except:
-            eVoting_pb2.Challenge(value = bytes("2pc is down", encoding="utf-8"))
+            return eVoting_pb2.Challenge(value = bytes("2pc is down", encoding="utf-8"))
         return eVoting_pb2.Challenge(value = bytes(challenge))
     
     def Auth(self, request, context):
